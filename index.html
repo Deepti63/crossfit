@@ -197,9 +197,29 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-
 .loading{text-align:center;padding:32px 16px;color:var(--muted);font-size:14px;}
 .empty{text-align:center;padding:32px 16px;color:var(--muted);font-size:14px;}
 
+/* ── STREAK ── */
+.streak-popup{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .3s;}
+.streak-popup.open{opacity:1;pointer-events:all;}
+.streak-card{background:linear-gradient(160deg,#1a0a00,#2a1200);border:1px solid rgba(245,200,66,0.4);border-radius:20px;padding:32px 24px;text-align:center;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(245,200,66,0.15);}
+.streak-fire{font-size:80px;display:block;margin-bottom:8px;}
+.streak-popup-count{font-family:'Barlow Condensed',sans-serif;font-size:80px;font-weight:900;color:var(--gold);line-height:1;letter-spacing:-2px;}
+.streak-popup-label{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(245,200,66,0.8);margin-bottom:8px;}
+.streak-popup-sub{font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:6px;line-height:1.6;}
+.streak-popup-pts{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--gold);margin-bottom:24px;font-weight:700;}
+.streak-share-btn{width:100%;padding:14px;background:var(--gold);color:#000;border:none;border-radius:10px;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-bottom:10px;}
+.streak-skip-btn{width:100%;padding:10px;background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;}
+.streak-dots{display:flex;gap:8px;justify-content:center;margin-bottom:16px;}
+.streak-dot{width:32px;height:8px;border-radius:4px;background:rgba(255,255,255,0.1);}
+.streak-dot.filled{background:var(--gold);box-shadow:0 0 8px rgba(245,200,66,0.5);}
+
 /* ── PR MODAL ── */
 .pr-history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
 .pr-history-item:last-child{border-bottom:none;}
+.announce-card{background:linear-gradient(135deg,#1a1200,#2a1e00);border-left:3px solid var(--gold);border-radius:0 var(--radius) var(--radius) 0;padding:14px 16px;margin:0 16px 10px;border-top:1px solid rgba(245,200,66,0.1);border-right:1px solid rgba(245,200,66,0.1);border-bottom:1px solid rgba(245,200,66,0.1);}
+.announce-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.announce-from{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold2);}
+.announce-time{font-size:11px;color:var(--muted);}
+.announce-text{font-size:14px;color:rgba(255,255,255,0.85);line-height:1.6;}
 </style>
 </head>
 <body>
@@ -248,6 +268,7 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-
   <!-- WOD -->
   <div id="sc-wod" class="screen active">
     <div id="wod-hero-wrap"><div class="loading">Loading today's WOD…</div></div>
+    <div id="announcements-wrap"></div>
     <div class="log-section">
       <div class="log-card" id="log-card" style="display:none">
         <div class="log-title">Log Your Score</div>
@@ -267,10 +288,12 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-
 
   <!-- LEADERBOARD -->
   <div id="sc-board" class="screen">
-    <div class="lb-tabs">
-      <div class="lb-tab active" onclick="setLBTab(this,'today')">Today</div>
-      <div class="lb-tab" onclick="setLBTab(this,'week')">This Week</div>
-      <div class="lb-tab" onclick="setLBTab(this,'alltime')">All Time</div>
+    <div style="padding:14px 16px 4px;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--gold);background:var(--surface);border-bottom:none;">🏆 Leaderboard</div>
+    <div class="lb-tabs" style="overflow-x:auto;scrollbar-width:none;">
+      <div class="lb-tab active" onclick="setLBTab(this,'today')" style="white-space:nowrap;">Today</div>
+      <div class="lb-tab" onclick="setLBTab(this,'monthly')" style="white-space:nowrap;">Monthly</div>
+      <div class="lb-tab" onclick="setLBTab(this,'alltime')" style="white-space:nowrap;">All Time</div>
+      <div class="lb-tab" onclick="setLBTab(this,'streak')" style="white-space:nowrap;">🔥 Streaks</div>
     </div>
     <div class="lb-filter">
       <div class="lb-chip active" onclick="setLBFilter(this,'all')">All</div>
@@ -283,6 +306,10 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-
 
   <!-- PR WALL -->
   <div id="sc-prs" class="screen">
+    <div style="display:flex;background:var(--surface);border-bottom:1px solid var(--border);">
+      <div class="lb-tab active" id="pr-tab-mine" onclick="setPRTab('mine')">My PRs</div>
+      <div class="lb-tab" id="pr-tab-gym" onclick="setPRTab('gym')">Gym Records</div>
+    </div>
     <div class="pr-section" id="pr-section"><div class="loading">Loading PRs…</div></div>
   </div>
 
@@ -327,7 +354,7 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-
 <!-- BOTTOM NAV -->
 <div class="bnav" id="bnav" style="display:none">
   <div class="bni active" onclick="go('wod')"><div class="bni-icon">🏋️</div><div class="bni-label">WOD</div></div>
-  <div class="bni" onclick="go('board')"><div class="bni-icon">🏆</div><div class="bni-label">Board</div></div>
+  <div class="bni" onclick="go('board')"><div class="bni-icon">🏆</div><div class="bni-label">Leaderboard</div></div>
   <div class="bni" onclick="go('prs')"><div class="bni-icon">💪</div><div class="bni-label">PRs</div></div>
   <div class="bni" onclick="go('profile')"><div class="bni-icon">👤</div><div class="bni-label">Me</div></div>
   <div class="bni" id="coach-nav-btn" style="display:none" onclick="go('coach')"><div class="bni-icon">📋</div><div class="bni-label">Coach</div></div>
@@ -345,6 +372,20 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-
       <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">History</div>
       <div id="pr-history-list"></div>
     </div>
+  </div>
+</div>
+
+<!-- STREAK POPUP -->
+<div class="streak-popup" id="streak-popup">
+  <div class="streak-card">
+    <span class="streak-fire">🔥</span>
+    <div class="streak-popup-count" id="sp-count">6</div>
+    <div class="streak-popup-label">Day Streak!</div>
+    <div class="streak-dots" id="sp-dots"></div>
+    <div class="streak-popup-sub" id="sp-sub">You have trained 6 days straight. That is elite consistency.</div>
+    <div class="streak-popup-pts" id="sp-pts">+5 bonus pts — share for +10</div>
+    <button class="streak-share-btn" onclick="claimStreakShare()">Share & Claim +10 pts 🔥</button>
+    <button class="streak-skip-btn" onclick="claimStreakOnly()">Claim +5 pts without sharing</button>
   </div>
 </div>
 
@@ -404,7 +445,7 @@ const PR_MOVEMENTS={
 const COLORS=['#f5c842','#e6a800','#aaa','#888','#666','#555'];
 
 let user=null,prof=null,isSignUp=false,isRx=true;
-let currentWOD=null,myScore=null,currentPRMove=null,lbTab='today',lbFilter='all';
+let currentWOD=null,myScore=null,currentPRMove=null,lbTab='today',lbFilter='all',prTab='mine',currentScoreType='time';
 let myPRs={};
 
 // ── AUTH ──
@@ -487,6 +528,7 @@ function showApp(){
   document.getElementById('p-streak').textContent=prof.streak||0;
   document.getElementById('p-prs').textContent=prof.prs_count||0;
   loadWOD();
+  loadAnnouncements();
 }
 
 // ── WOD ──
@@ -586,32 +628,72 @@ function detectWODType(text){
 }
 
 function buildScoreInputs(wodType){
-  const t=wodType.toUpperCase();
-  let html='';
-  if(t.includes('AMRAP')){
-    html=`<div class="score-input-wrap"><div class="score-label">Rounds</div><input class="score-input" id="inp-rounds" type="number" min="0" placeholder="0"></div>
-    <div class="score-input-wrap"><div class="score-label">Reps</div><input class="score-input" id="inp-reps" type="number" min="0" placeholder="+0"></div>`;
-  } else if(t.includes('STRENGTH')||t.includes('MAX')){
-    html=`<div class="score-input-wrap"><div class="score-label">Weight (kg)</div><input class="score-input" id="inp-weight" type="number" min="0" placeholder="100"></div>`;
-  } else {
-    html=`<div class="score-input-wrap"><div class="score-label">Minutes</div><input class="score-input" id="inp-min" type="number" min="0" placeholder="MM"></div>
-    <div class="score-input-wrap"><div class="score-label">Seconds</div><input class="score-input" id="inp-sec" type="number" min="0" max="59" placeholder="SS"></div>`;
-  }
+  const t=(wodType||'').toUpperCase();
+  // Score type selector + inputs
+  const html=`
+    <div style="margin-bottom:10px;">
+      <div class="score-label" style="margin-bottom:6px;">Score Type</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="score-type-btn ${t.includes('AMRAP')?'active':''}" onclick="setScoreType('amrap',this)">AMRAP</button>
+        <button class="score-type-btn ${(!t.includes('AMRAP')&&!t.includes('STRENGTH')&&!t.includes('MAX'))?'active':''}" onclick="setScoreType('time',this)">For Time</button>
+        <button class="score-type-btn ${(t.includes('STRENGTH')||t.includes('MAX'))?'active':''}" onclick="setScoreType('weight',this)">Weight</button>
+      </div>
+    </div>
+    <div id="score-fields"></div>`;
   document.getElementById('score-inputs').innerHTML=html;
+
+  // Add button styles inline
+  document.querySelectorAll('.score-type-btn').forEach(b=>{
+    b.style.cssText='padding:7px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);font-family:Barlow Condensed,sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;color:var(--muted);transition:all .2s;';
+    if(b.classList.contains('active')){
+      b.style.borderColor='var(--gold)';b.style.color='var(--gold)';b.style.background='rgba(245,200,66,0.1)';
+    }
+  });
+
+  // Show correct fields
+  if(t.includes('AMRAP'))setScoreType('amrap');
+  else if(t.includes('STRENGTH')||t.includes('MAX'))setScoreType('weight');
+  else setScoreType('time');
+}
+
+function setScoreType(type,btn){
+  currentScoreType=type;
+  if(btn){
+    document.querySelectorAll('.score-type-btn').forEach(b=>{
+      b.style.borderColor='var(--border)';b.style.color='var(--muted)';b.style.background='var(--surface2)';
+    });
+    btn.style.borderColor='var(--gold)';btn.style.color='var(--gold)';btn.style.background='rgba(245,200,66,0.1)';
+  }
+  const el=document.getElementById('score-fields');
+  if(!el)return;
+  if(type==='amrap'){
+    el.innerHTML=`<div style="display:flex;gap:8px;">
+      <div class="score-input-wrap"><div class="score-label">Rounds</div><input class="score-input" id="inp-rounds" type="number" min="0" placeholder="0"></div>
+      <div class="score-input-wrap"><div class="score-label">+ Reps</div><input class="score-input" id="inp-reps" type="number" min="0" placeholder="0"></div>
+    </div>`;
+  } else if(type==='weight'){
+    el.innerHTML=`<div class="score-input-wrap"><div class="score-label">Weight (kg)</div><input class="score-input" id="inp-weight" type="number" min="0" placeholder="e.g. 100"></div>`;
+  } else {
+    el.innerHTML=`<div style="display:flex;gap:8px;">
+      <div class="score-input-wrap"><div class="score-label">Minutes</div><input class="score-input" id="inp-min" type="number" min="0" placeholder="MM"></div>
+      <div class="score-input-wrap"><div class="score-label">Seconds</div><input class="score-input" id="inp-sec" type="number" min="0" max="59" placeholder="SS"></div>
+    </div>`;
+  }
 }
 
 function getScoreValue(){
-  const t=(currentWOD?.wod_type||'').toUpperCase();
-  if(t.includes('AMRAP')){
+  if(currentScoreType==='amrap'){
     const r=document.getElementById('inp-rounds')?.value||'0';
     const p=document.getElementById('inp-reps')?.value||'0';
     return r+' rounds + '+p+' reps';
-  } else if(t.includes('STRENGTH')||t.includes('MAX')){
-    const w=document.getElementById('inp-weight')?.value||'0';
+  } else if(currentScoreType==='weight'){
+    const w=document.getElementById('inp-weight')?.value||'';
+    if(!w)return'';
     return w+'kg';
   } else {
-    const m=document.getElementById('inp-min')?.value||'0';
+    const m=document.getElementById('inp-min')?.value||'';
     const s=String(document.getElementById('inp-sec')?.value||'0').padStart(2,'0');
+    if(!m)return'';
     return m+':'+s;
   }
 }
@@ -660,6 +742,11 @@ async function submitScore(){
   document.getElementById('p-wods').textContent=newWods;
   document.getElementById('p-streak').textContent=newStreak;
 
+  // Trigger streak popup on every 6-day milestone
+  if(newStreak>0&&newStreak%6===0){
+    setTimeout(()=>showStreakPopup(newStreak),1000);
+  }
+
   myScore={score_value:score,is_rx:isRx};
   showMyScore();
   showToast('Score logged! 💪');
@@ -674,20 +761,103 @@ async function loadLeaderboard(){
   pod.innerHTML='';
 
   const today=new Date().toISOString().split('T')[0];
-  let q=sb.from('scores').select('*, members(name)').order('created_at',{ascending:true});
 
-  if(lbTab==='today')q=q.eq('wod_date',today);
-  else if(lbTab==='week'){
-    const weekAgo=new Date(Date.now()-7*86400000).toISOString().split('T')[0];
-    q=q.gte('wod_date',weekAgo);
+  // Monthly points leaderboard — rank based on WOD positions
+  if(lbTab==='monthly'||lbTab==='alltime'){
+    const monthStart=new Date(new Date().getFullYear(),new Date().getMonth(),1).toISOString().split('T')[0];
+    let q=sb.from('scores').select('user_id, wod_date, members(name, wods_completed)');
+    if(lbTab==='monthly')q=q.gte('wod_date',monthStart);
+    if(lbFilter==='rx')q=q.eq('is_rx',true);
+    if(lbFilter==='scaled')q=q.eq('is_rx',false);
+    const{data:allScores}=await q;
+    if(!allScores||!allScores.length){rows.innerHTML='<div class="empty">No scores yet this period.</div>';return;}
+
+    // Calculate points per user
+    // Group scores by date, rank within each date, award points
+    const byDate={};
+    allScores.forEach(s=>{
+      if(!byDate[s.wod_date])byDate[s.wod_date]=[];
+      byDate[s.wod_date].push(s);
+    });
+
+    const pointsMap={};
+    const POINTS=[10,8,6,5,4,3,2,1];
+    Object.values(byDate).forEach(dayScores=>{
+      dayScores.forEach((s,i)=>{
+        if(!pointsMap[s.user_id])pointsMap[s.user_id]={pts:0,name:s.members?.name||'Athlete',wods:0};
+        pointsMap[s.user_id].pts+=(POINTS[i]||1);
+        pointsMap[s.user_id].wods+=1;
+      });
+    });
+
+    const ranked=Object.entries(pointsMap)
+      .map(([uid,d])=>({user_id:uid,...d}))
+      .sort((a,b)=>b.pts-a.pts);
+
+    renderPodium(ranked.slice(0,3).map(r=>({
+      user_id:r.user_id,
+      members:{name:r.name},
+      score_value:r.pts+' pts',
+      is_rx:true
+    })));
+
+    rows.innerHTML=ranked.slice(3).map((r,i)=>{
+      const isMe=user&&r.user_id===user.id;
+      return `<div class="lb-row ${isMe?'me':''}">
+        <div class="lb-pos">${i+4}</div>
+        <div class="lb-av-sm" style="background:${COLORS[(i+4)%COLORS.length]};color:#000">${initials(r.name)}</div>
+        <div class="lb-info">
+          <div class="lb-name">${r.name}${isMe?' (You)':''}</div>
+          <div class="lb-sub">${r.wods} WODs completed</div>
+        </div>
+        <div>
+          <div class="lb-score">${r.pts} pts</div>
+          <div class="rx-tag rx">POINTS</div>
+        </div>
+      </div>`;
+    }).join('');
+    return;
   }
+
+  // Streak leaderboard
+  if(lbTab==='streak'){
+    const{data:members}=await sb.from('members')
+      .select('id,name,streak,wods_completed')
+      .eq('status','active')
+      .order('streak',{ascending:false})
+      .limit(25);
+    if(!members||!members.length){rows.innerHTML='<div class="empty">No streaks yet. Start training! 🔥</div>';return;}
+    renderPodium(members.slice(0,3).map(m=>({
+      user_id:m.id,members:{name:m.name},
+      score_value:m.streak+' days',is_rx:true
+    })));
+    rows.innerHTML=members.slice(3).map((m,i)=>{
+      const isMe=user&&m.id===user.id;
+      const dots=Array.from({length:Math.min(m.streak,6)},()=>'🔥').join('');
+      return `<div class="lb-row ${isMe?'me':''}">
+        <div class="lb-pos">${i+4}</div>
+        <div class="lb-av-sm" style="background:${m.streak>=6?'#e6a800':'#333'};color:${m.streak>=6?'#000':'#f5c842'}">${initials(m.name)}</div>
+        <div class="lb-info">
+          <div class="lb-name">${m.name}${isMe?' (You)':''}</div>
+          <div class="lb-sub">${m.wods_completed||0} total WODs · ${dots||'No streak yet'}</div>
+        </div>
+        <div>
+          <div class="lb-score" style="color:${m.streak>=6?'var(--gold)':'var(--text)'};">${m.streak} 🔥</div>
+          <div class="rx-tag rx" style="margin-top:2px;">STREAK</div>
+        </div>
+      </div>`;
+    }).join('');
+    return;
+  }
+
+  // Today's WOD leaderboard
+  let q=sb.from('scores').select('*, members(name)').eq('wod_date',today).order('created_at',{ascending:true});
   if(lbFilter==='rx')q=q.eq('is_rx',true);
   if(lbFilter==='scaled')q=q.eq('is_rx',false);
 
   const{data}=await q.limit(30);
-  if(!data||!data.length){rows.innerHTML='<div class="empty">No scores yet. Be the first! 🏋️</div>';return;}
+  if(!data||!data.length){rows.innerHTML='<div class="empty">No scores yet today.<br>Log your score after the WOD! 🏋️</div>';return;}
 
-  // Deduplicate by user (keep first/best per user for today)
   const seen=new Set(),unique=[];
   data.forEach(s=>{if(!seen.has(s.user_id)){seen.add(s.user_id);unique.push(s);}});
 
@@ -710,9 +880,89 @@ async function loadLeaderboard(){
   }).join('');
 }
 
+function renderPodium(top){
+  const pod=document.getElementById('lb-podium');
+  if(!top||!top.length){pod.innerHTML='';return;}
+  pod.innerHTML=`<div class="lb-podium">
+    ${top[1]?`<div class="pod p2"><div class="pod-av" style="background:#555;color:#fff">${initials(top[1].members?.name||'?')}</div><div class="pod-name">${(top[1].members?.name||'?').split(' ')[0]}</div><div class="pod-score">${top[1].score_value}</div><div class="pod-base"><div class="pod-rank">2</div></div></div>`:'<div class="pod p2"><div class="pod-base" style="height:36px;width:76px;"></div></div>'}
+    <div class="pod p1"><div style="font-size:16px;margin-bottom:4px;">🏅</div><div class="pod-av">${initials(top[0].members?.name||'?')}</div><div class="pod-name">${(top[0].members?.name||'?').split(' ')[0]}</div><div class="pod-score">${top[0].score_value}</div><div class="pod-base"><div class="pod-rank">1</div></div></div>
+    ${top[2]?`<div class="pod p3"><div class="pod-av" style="background:#555;color:#fff">${initials(top[2].members?.name||'?')}</div><div class="pod-name">${(top[2].members?.name||'?').split(' ')[0]}</div><div class="pod-score">${top[2].score_value}</div><div class="pod-base"><div class="pod-rank">3</div></div></div>`:'<div class="pod p3"><div class="pod-base" style="height:36px;width:76px;"></div></div>'}
+  </div>`;
+}
+
 function setLBTab(el,tab){
   document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');lbTab=tab;loadLeaderboard();
+}
+
+// ── STREAK SYSTEM ──
+function showStreakPopup(streak){
+  const dots=Array.from({length:6},(_,i)=>
+    `<div class="streak-dot ${i<(streak%6||6)?'filled':''}"></div>`
+  ).join('');
+  document.getElementById('sp-count').textContent=streak;
+  document.getElementById('sp-dots').innerHTML=dots;
+  document.getElementById('sp-sub').textContent=
+    `You have trained ${streak} days straight. That is elite consistency at CrossFit GoldPro.`;
+  document.getElementById('sp-pts').textContent='+5 bonus pts — share for +10';
+  document.getElementById('streak-popup').classList.add('open');
+}
+
+async function claimStreakShare(){
+  document.getElementById('streak-popup').classList.remove('open');
+  await awardBonusPts(10);
+  drawStreakCard();
+  document.getElementById('share-modal').classList.add('open');
+  showToast('+10 bonus pts! Share the fire 🔥');
+}
+
+async function claimStreakOnly(){
+  document.getElementById('streak-popup').classList.remove('open');
+  await awardBonusPts(5);
+  showToast('+5 bonus pts! Keep the streak going 🔥');
+}
+
+async function awardBonusPts(pts){
+  if(!user||!prof)return;
+  const newPts=(prof.wods_completed||0);
+  await sb.from('members').update({
+    streak:prof.streak
+  }).eq('id',user.id);
+  // Add bonus score entry
+  await sb.from('scores').insert({
+    user_id:user.id,
+    wod_date:new Date().toISOString().split('T')[0],
+    score_value:'Streak Bonus',
+    wod_title:'🔥 '+prof.streak+' Day Streak Bonus',
+    is_rx:true
+  }).maybeSingle();
+  showToast('Bonus claimed! 💪');
+}
+
+function drawStreakCard(){
+  const canvas=document.getElementById('share-canvas');
+  canvas.width=1080;canvas.height=1080;
+  canvas.style.width='100%';canvas.style.height='auto';
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0a0500';ctx.fillRect(0,0,1080,1080);
+  const g=ctx.createRadialGradient(540,400,0,540,400,500);
+  g.addColorStop(0,'rgba(245,150,0,0.2)');g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,1080,1080);
+  ctx.font='bold 52px sans-serif';ctx.fillStyle='#f5c842';
+  ctx.textAlign='center';ctx.fillText('⚡ CROSSFIT GOLDPRO',540,90);
+  ctx.font='160px sans-serif';ctx.fillText('🔥',540,310);
+  ctx.font='bold 140px sans-serif';ctx.fillStyle='#f5c842';
+  ctx.fillText(prof.streak,540,470);
+  ctx.font='bold 52px sans-serif';ctx.fillStyle='rgba(245,200,66,0.85)';
+  ctx.fillText('DAY STREAK',540,548);
+  ctx.font='30px sans-serif';ctx.fillStyle='rgba(255,255,255,0.55)';
+  ctx.fillText(prof.name+' · CrossFit GoldPro',540,610);
+  ctx.font='26px sans-serif';ctx.fillStyle='rgba(245,150,0,0.7)';
+  ctx.fillText('No days off. No excuses.',540,665);
+  ctx.strokeStyle='rgba(245,200,66,0.25)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(80,710);ctx.lineTo(1000,710);ctx.stroke();
+  ctx.font='24px sans-serif';ctx.fillStyle='rgba(245,200,66,0.5)';
+  ctx.fillText('Train with us → CrossFit GoldPro 🔥',540,760);
 }
 function setLBFilter(el,filter){
   document.querySelectorAll('.lb-chip').forEach(c=>c.classList.remove('active'));
@@ -720,6 +970,16 @@ function setLBFilter(el,filter){
 }
 
 // ── PR WALL ──
+let prTab='mine';
+
+function setPRTab(tab){
+  prTab=tab;
+  document.getElementById('pr-tab-mine').classList.toggle('active',tab==='mine');
+  document.getElementById('pr-tab-gym').classList.toggle('active',tab==='gym');
+  if(tab==='mine')loadPRs();
+  else loadGymPRs();
+}
+
 async function loadPRs(){
   if(!user)return;
   const{data}=await sb.from('prs').select('*').eq('user_id',user.id);
@@ -742,6 +1002,78 @@ async function loadPRs(){
     html+='</div>';
   });
   document.getElementById('pr-section').innerHTML=html;
+}
+
+async function loadGymPRs(){
+  const el=document.getElementById('pr-section');
+  el.innerHTML='<div class="loading">Loading gym records…</div>';
+
+  // Fetch all PRs with member names
+  const{data,error}=await sb.from('prs')
+    .select('*, members(name)')
+    .order('updated_at',{ascending:false});
+
+  if(error||!data||!data.length){
+    el.innerHTML='<div class="empty">No gym records yet.<br>Be the first to log a PR! 🏋️</div>';
+    return;
+  }
+
+  // Group by movement, keep best per movement
+  const gymBest={};
+  data.forEach(pr=>{
+    if(!gymBest[pr.movement]){gymBest[pr.movement]=[];}
+    gymBest[pr.movement].push(pr);
+  });
+
+  let html='';
+  Object.entries(PR_MOVEMENTS).forEach(([cat,moves])=>{
+    const catMoves=moves.filter(m=>gymBest[m.name]&&gymBest[m.name].length);
+    if(!catMoves.length)return;
+    html+=`<div class="pr-cat-title">${cat}</div>`;
+    catMoves.forEach(m=>{
+      const records=gymBest[m.name]||[];
+      // Sort: time = ascending (faster = better), weight/score = descending
+      records.sort((a,b)=>{
+        if(m.type==='time'){
+          return a.value.localeCompare(b.value);
+        }
+        return parseFloat(b.value)-parseFloat(a.value);
+      });
+      const top=records[0];
+      const isMe=top.user_id===user?.id;
+      html+=`<div class="pr-card has-pr" style="border-color:rgba(245,200,66,${isMe?'0.6':'0.2'});">
+        <div class="pr-move">${m.name}</div>
+        <div class="pr-val" style="font-size:18px;">${top.value}</div>
+        <div class="pr-unit">${m.unit}</div>
+        <div class="pr-date" style="color:${isMe?'var(--gold)':'var(--muted)'};">
+          ${top.members?.name||'Athlete'}${isMe?' 👑':''}
+        </div>
+        ${records.length>1?`<div style="font-size:10px;color:var(--muted);margin-top:4px;">${records.length} athletes logged</div>`:''}
+      </div>`;
+    });
+    // Show top 3 for each category as a mini leaderboard
+    html+=`<div style="margin-bottom:16px;">`;
+    catMoves.forEach(m=>{
+      const records=gymBest[m.name]||[];
+      if(records.length<2)return;
+      records.sort((a,b)=>m.type==='time'?a.value.localeCompare(b.value):parseFloat(b.value)-parseFloat(a.value));
+      html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:8px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;color:var(--gold);margin-bottom:10px;">${m.name} — Top ${Math.min(records.length,3)}</div>
+        ${records.slice(0,3).map((r,i)=>{
+          const isMe=r.user_id===user?.id;
+          const medals=['🥇','🥈','🥉'];
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:16px;">${medals[i]}</span>
+            <div style="flex:1;font-size:13px;font-weight:600;color:${isMe?'var(--gold)':'var(--text)'};">${r.members?.name||'Athlete'}${isMe?' (You)':''}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:${isMe?'var(--gold)':'var(--text)'};">${r.value} ${m.unit}</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    });
+    html+='</div>';
+  });
+
+  el.innerHTML=html||'<div class="empty">No records yet</div>';
 }
 
 function openPRModal(name,unit,type){
@@ -787,6 +1119,42 @@ async function savePR(){
   closeModal('pr-modal');
   showToast('PR saved! 🏋️');
   loadPRs();
+}
+
+// ── ANNOUNCEMENTS ──
+async function loadAnnouncements(){
+  const el=document.getElementById('announcements-wrap');
+  if(!el)return;
+  const{data}=await sb.from('announcements')
+    .select('*, members(name)')
+    .order('created_at',{ascending:false})
+    .limit(3);
+  if(!data||!data.length){el.innerHTML='';return;}
+  el.innerHTML=`<div style="padding:12px 16px 4px;">
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;">📣 Coach Announcements</div>
+  </div>`+
+  data.map(a=>{
+    const dt=new Date(a.created_at);
+    const timeAgo=getTimeAgo(dt);
+    return `<div class="announce-card">
+      <div class="announce-header">
+        <div class="announce-from">Coach ${a.members?.name?.split(' ')[0]||'GoldPro'}</div>
+        <div class="announce-time">${timeAgo}</div>
+      </div>
+      <div class="announce-text">${a.content}</div>
+    </div>`;
+  }).join('');
+}
+
+function getTimeAgo(date){
+  const diff=Date.now()-date.getTime();
+  const mins=Math.floor(diff/60000);
+  const hrs=Math.floor(diff/3600000);
+  const days=Math.floor(diff/86400000);
+  if(mins<1)return'Just now';
+  if(mins<60)return mins+'m ago';
+  if(hrs<24)return hrs+'h ago';
+  return days+'d ago';
 }
 
 // ── PROFILE HISTORY ──
@@ -855,9 +1223,11 @@ async function rejectMember(id){
 async function postAnnouncement(){
   const text=document.getElementById('announce-text').value.trim();
   if(!text){showToast('Write something first');return;}
-  await sb.from('announcements').insert({coach_id:user.id,content:text});
+  const{error}=await sb.from('announcements').insert({coach_id:user.id,content:text});
+  if(error){showToast('Error: '+error.message);return;}
   document.getElementById('announce-text').value='';
   showToast('Announcement posted! 📣');
+  loadAnnouncements();
 }
 
 // ── SHARE STATS ──
